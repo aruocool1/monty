@@ -1,16 +1,28 @@
-#ifndef MONTY_H
-#define MONTY_H
+#ifndef __MONTY_H__
+#define __MONTY_H__
+
+
+/* --------------To be able to use getline func---------------- */
+
+#define  _POSIX_C_SOURCE 200809L
+
+/* ============================================================ */
+
+
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
 
-#define STACK 0
-#define QUEUE 1
-#define DELIMS " \n\t\a\b"
+#define STACK 1 /* stack mode */
+#define QUEUE 0 /* Queue mode */
+#define DELIM " \n\t\r\a\b"
+#define FAILURE -1
 
-/* opcode token */
-extern char **op_toks;
+
+
+
+/* -----------Struct variables to build my stack or queue---------- */
 
 /**
  * struct stack_s - doubly linked list representation of a stack (or queue)
@@ -28,6 +40,12 @@ typedef struct stack_s
 	struct stack_s *next;
 } stack_t;
 
+/* ================================================================ */
+
+
+
+/* -----------link monty opcode to necessary function-------------- */
+
 /**
  * struct instruction_s - opcode and its function
  * @opcode: the opcode
@@ -42,73 +60,97 @@ typedef struct instruction_s
 	void (*f)(stack_t **stack, unsigned int line_number);
 } instruction_t;
 
+/* ================================================================ */
 
-/*tools.c*/
-void free_tokens(void);
-unsigned int token_arr_len(void);
-int is_empty_line(char *line, char *delims);
-void (*get_op_func(char *opcode))(stack_t**, unsigned int);
-int monty(FILE *fd);
 
-/*tools1.c*/
-char **strtow(char *str, char *delims);
-int is_delim(char ch, char *delims);
-int get_word_length(char *str, char *delims);
-int get_word_count(char *str, char *delims);
-char *get_next_word(char *str, char *delims);
 
-/*tools2.c*/
+
+/* --------------------Global Struct variable---------------------- */
+
+/**
+ * struct global_s - global struct for monty variable
+ * @err_status: error status to hold error term
+ * @toks_num: number tokenized from the line read
+ */
+typedef struct global_s
+{
+	int err_status;
+	char *toks_num;
+} global_t;
+
+extern global_t global;
+
+/* ================================================================ */
+
+
+
+/* -----------------Monty Handler(#1-parser.c)--------------------- */
+
+int exec_monty(FILE *);
+void (*get_op_func(char *ops))(stack_t **, unsigned int);
+stack_t *stack_init(void);
+int check_mode(stack_t *);
+
+/* ================================================================ */
+
+
+
+/* -------------monty Helper funcs(#2-helper_funcs.c)-------------- */
+
+int is_digit(char *);
+int stack_size(stack_t *);
+stack_t *add_new_node(int);
+
+/* ================================================================ */
+
+
+
+/* -----------------------Monty Operations------------------------- */
+
+
+/* -----------------(#3-handlers.c)------------------------ */
+
+void push_handler(stack_t **stack, unsigned int line_number);
+void pall_handler(stack_t **stack, unsigned int line_number);
+void pint_handler(stack_t **stack, unsigned int line_number);
+void pop_handler(stack_t **stack, unsigned int line_number);
+void swap_handler(stack_t **stack, unsigned int line_number);
+
+
+/* -----------------(#4-handlers.c)------------------------ */
+
+void div_handler(stack_t **stack, unsigned int line_number);
+void mul_handler(stack_t **stack, unsigned int line_number);
+void mod_handler(stack_t **stack, unsigned int line_number);
+void add_handler(stack_t **stack, unsigned int line_number);
+void sub_handler(stack_t **stack, unsigned int line_number);
+
+
+/* -----------------(#5-handlers.c)------------------------ */
+
+void pchar_handler(stack_t **stack, unsigned int line_number);
+void pstr_handler(stack_t **stack, unsigned int line_number);
+void rotl_handler(stack_t **stack, unsigned int line_number);
+void rotr_handler(stack_t **stack, unsigned int line_number);
+
+
+/* -----------------(#6-handlers.c)------------------------ */
+
+void stack_handler(stack_t **stack, unsigned int line_number);
+void queue_handler(stack_t **stack, unsigned int line_number);
+void nop_handler(stack_t **stack, unsigned int line_number);
+
+
+/* ================================================================ */
+
+
+
+/* ---------------Memory manager(#7-mem_management.c)-------------- */
+
 void free_stack(stack_t **stack);
-int init_stack(stack_t **stack);
-int check_mode(stack_t *stack);
-void set_op_tok_error(int error_code);
+
+/* ================================================================ */
 
 
-/*functions.c*/
-void mpush(stack_t **stack, unsigned int line_number);
-void mpall(stack_t **stack, unsigned int line_number);
-void mpint(stack_t **stack, unsigned int line_number);
-void mpop(stack_t **stack, unsigned int line_number);
-void mswap(stack_t **stack, unsigned int line_number);
 
-/*functions1.c*/
-void madd(stack_t **stack, unsigned int line_number);
-void msub(stack_t **stack, unsigned int line_number);
-void mdiv(stack_t **stack, unsigned int line_number);
-void mmul(stack_t **stack, unsigned int line_number);
-void mmod(stack_t **stack, unsigned int line_number);
-
-/*functions2.c*/
-void mnop(stack_t **stack, unsigned int line_number);
-void mpchar(stack_t **stack, unsigned int line_number);
-void mpstr(stack_t **stack, unsigned int line_number);
-void mrotl(stack_t **stack, unsigned int line_number);
-void mrotr(stack_t **stack, unsigned int line_number);
-
-/*functions3.c*/
-void mstack(stack_t **stack, unsigned int line_number);
-void mqueue(stack_t **stack, unsigned int line_number);
-
-/*errors.c*/
-int usage_error(void);
-int malloc_error(void);
-int f_open_error(char *filename);
-int unknown_op_error(char *opcode, unsigned int line_number);
-int no_int_error(unsigned int line_number);
-
-/*errors1.c*/
-int pop_error(unsigned int line_number);
-int pint_error(unsigned int line_number);
-int short_stack_error(unsigned int line_number, char *op);
-int div_error(unsigned int line_number);
-int pchar_error(unsigned int line_number, char *message);
-
-/*aux.c*/
-char *get_int(int num);
-unsigned int _abs(int);
-int get_numbase_len(unsigned int num, unsigned int base);
-void fill_numbase_buff(unsigned int num, unsigned int base,
-		       char *buff, int buff_size);
-
-
-#endif
+#endif /* __MONTY_H__ */
